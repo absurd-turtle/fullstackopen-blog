@@ -77,6 +77,28 @@ test('all blogs are returned', async () => {
   expect(response.body).toHaveLength(initialBlogs.length)
 })
 
+test('unique identifier property is named id', async () => {
+  const response = await api.get('/api/blogs')
+  expect(response.body[0].id).toBeDefined()
+})
+
+test('creates a new blog post', async () => {
+  let response = await api.get('/api/blogs')
+  const previousLength = response.body.length
+
+  await api.post('/api/blogs', {
+    _id: "5a422bc61b54a676234d23ty",
+    title: "Some title",
+    author: "Robert C. Martin",
+    url: "http://test.com/some/uri",
+    likes: 2,
+    __v: 0
+  })
+
+  response = await api.get('/api/blogs')
+  expect(response.body.length).toBe(previousLength + 1)
+})
+
 afterAll(() => {
   mongoose.connection.close()
 })

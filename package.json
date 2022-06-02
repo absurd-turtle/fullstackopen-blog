@@ -4,16 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "jest --verbose",
-    "dev": "nodemon index.js",
+    "start": "NODE_ENV=production node index.js",
+    "test": "NODE_ENV=test jest --verbose --runInBand --forceExit",
+    "dev": "NODE_ENV=development nodemon index.js",
     "deploy": "git push heroku master"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "jest": "^28.1.0",
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "supertest": "^6.2.3"
   },
   "dependencies": {
     "cors": "^2.8.5",

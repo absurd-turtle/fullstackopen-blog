@@ -3,78 +3,28 @@ const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
 const Blog = require('../models/blog')
+const helper = require('./test_helper')
 
-const initialBlogs = [
-  {
-    _id: "5a422a851b54a676234d17f7",
-    title: "React patterns",
-    author: "Michael Chan",
-    url: "https://reactpatterns.com/",
-    likes: 7,
-    __v: 0
-  },
-  {
-    _id: "5a422aa71b54a676234d17f8",
-    title: "Go To Statement Considered Harmful",
-    author: "Edsger W. Dijkstra",
-    url: "http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html",
-    likes: 5,
-    __v: 0
-  },
-  {
-    _id: "5a422b3a1b54a676234d17f9",
-    title: "Canonical string reduction",
-    author: "Edsger W. Dijkstra",
-    url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
-    likes: 12,
-    __v: 0
-  },
-  {
-    _id: "5a422b891b54a676234d17fa",
-    title: "First class tests",
-    author: "Robert C. Martin",
-    url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll",
-    likes: 10,
-    __v: 0
-  },
-  {
-    _id: "5a422ba71b54a676234d17fb",
-    title: "TDD harms architecture",
-    author: "Robert C. Martin",
-    url: "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
-    likes: 0,
-    __v: 0
-  },
-  {
-    _id: "5a422bc61b54a676234d17fc",
-    title: "Type wars",
-    author: "Robert C. Martin",
-    url: "http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html",
-    likes: 2,
-    __v: 0
-  }
-]
 
 beforeEach(async () => {
   await Blog.deleteMany({})
-  let promises = initialBlogs.map(blog => {
-    let blogObject = new Blog(blog)
-    return blogObject.save()
+  await Blog.insertMany(helper.initialBlogs)
+})
+
+
+describe("when there is initially some blogs saved", () => {
+  test('blog posts are returned as json', async () => {
+    await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
   })
-  await Promise.all(promises)
-})
+  test('all blogs are returned', async () => {
+    const response = await api.get('/api/blogs')
 
-test('blog posts are returned as json', async () => {
-  await api
-    .get('/api/blogs')
-    .expect(200)
-    .expect('Content-Type', /application\/json/)
-})
+    expect(response.body).toHaveLength(helper.initialBlogs.length)
+  })
 
-test('all blogs are returned', async () => {
-  const response = await api.get('/api/blogs')
-
-  expect(response.body).toHaveLength(initialBlogs.length)
 })
 
 test('unique identifier property is named id', async () => {
@@ -98,6 +48,40 @@ test('creates a new blog post', async () => {
   response = await api.get('/api/blogs')
   expect(response.body.length).toBe(previousLength + 1)
 })
+
+test('delete a blog post', async () => {
+  let response = await api.get('/api/blogs')
+  const previousLength = response.body.length
+
+  const blogToDelete = helper.initialBlogs[0]
+
+  await api
+    .delete(`/api/blogs/${blogToDelete._id}`)
+    .expect(204)
+
+  response = await api.get('/api/blogs')
+  expect(response.body.length).toBe(previousLength - 1)
+  const titles = response.body.map(b => b.title)
+  expect(titles).not.toContain(blogToDelete)
+})
+
+test('update a blog post', async () => {
+  let blogToUpdate = {
+    title: helper.initialBlogs[0].title,
+    author: helper.initialBlogs[0].author,
+    url: helper.initialBlogs[0].url,
+    likes: 10
+  }
+
+  const response = await api
+    .put(`/api/blogs/${helper.initialBlogs[0]._id}`)
+    .send(blogToUpdate)
+    .expect(200)
+
+  expect(response.body.likes).toBe(10)
+})
+
+
 
 afterAll(() => {
   mongoose.connection.close()

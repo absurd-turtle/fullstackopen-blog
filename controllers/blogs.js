@@ -6,7 +6,7 @@ const User = require('../models/user')
 blogsRouter.get('/', async (request, response) => {
   const blogs = await Blog
     .find({})
-    .populate('author', { username: 1, name: 1 })
+    .populate('user', { username: 1, name: 1 })
   response.json(blogs)
 })
 
@@ -21,7 +21,8 @@ blogsRouter.post('/', async (request, response) => {
 
   const blog = new Blog({
     title: request.body.title,
-    author: user.id,
+    author: request.body.author,
+    user: user.id,
     url: request.body.url,
     likes: request.body.likes
   })
@@ -34,11 +35,21 @@ blogsRouter.post('/', async (request, response) => {
 })
 
 blogsRouter.delete('/:id', async (request, response, next) => {
+  const decodedToken = jwt.verify(request.token, process.env.SECRET)
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'token missing or invalid' })
+  }
+
   await Blog.findByIdAndRemove(request.params.id)
   response.status(204).end()
 })
 
 blogsRouter.put('/:id', async (request, response, next) => {
+  const decodedToken = jwt.verify(request.token, process.env.SECRET)
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'token missing or invalid' })
+  }
+
   const blog = {
     title: request.body.title,
     author: request.body.author,

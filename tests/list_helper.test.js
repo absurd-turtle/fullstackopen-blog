@@ -88,3 +88,19 @@ describe("favoriteBlog", () => {
     expect(blog._id).toBe("5a422b3a1b54a676234d17f9")
   })
 })
+
+describe("mostBlogs", () => {
+  test("returns the author with the most blogs and the amount of blogs", () => {
+    const result = listHelper.mostBlogs(blogs)
+    expect(result.author).toBe("Robert C. Martin")
+    expect(result.blogs).toBe(3)
+  })
+})
+
+describe("mostLikes", () => {
+  test("returns the author with the most likes and the amount of likes", () => {
+    const result = listHelper.mostLikes(blogs)
+    expect(result.author).toBe("Edsger W. Dijkstra")
+    expect(result.likes).toBe(17)
+  })
+})
